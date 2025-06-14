@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "sign_ups",
+  "info": {
+    "singularName": "sign-up",
+    "pluralName": "sign-ups",
+    "displayName": "UserInfo"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fullname": {
+      "type": "string",
+      "maxLength": 100,
+      "required": false
+    },
+    "Email": {
+      "type": "email",
+      "required": true,
+      "unique": true
+    },
+    "password": {
+      "type": "password",
+      "required": true
+    },
+    "Confirmpassword": {
+      "type": "password",
+      "required": true
+    }
+  }
+}

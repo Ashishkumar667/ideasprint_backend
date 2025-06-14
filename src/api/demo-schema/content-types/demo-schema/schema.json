@@ -1,0 +1,73 @@
+{
+  "kind": "collectionType",
+  "collectionName": "demo_schemas",
+  "info": {
+    "singularName": "demo-schema",
+    "pluralName": "demo-schemas",
+    "displayName": "demoSchema"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Fullname": {
+      "type": "string",
+      "required": true
+    },
+    "Email": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "ProjectName": {
+      "type": "string",
+      "required": true
+    },
+    "ShortDescription": {
+      "type": "text",
+      "required": true
+    },
+    "TargetAudience": {
+      "type": "string",
+      "required": true
+    },
+    "coreFeatures": {
+      "type": "json",
+      "required": true
+    },
+    "UploadFiles": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "DesignPreferences": {
+      "type": "text"
+    },
+    "Purpose": {
+      "type": "text"
+    },
+    "ShortDescriptionOfIdea": {
+      "type": "text"
+    },
+    "TotalMoney": {
+      "type": "string",
+      "required": true
+    },
+    "Plan": {
+      "type": "string",
+      "required": true
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "demo_schemas"
+    }
+  }
+}

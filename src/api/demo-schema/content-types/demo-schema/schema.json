@@ -18,7 +18,7 @@
     "Email": {
       "type": "string",
       "required": true,
-      "unique": true
+      "unique": false
     },
     "ProjectName": {
       "type": "string",

@@ -425,6 +425,8 @@ export interface ApiDemoSchemaDemoSchema extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    Demo_status: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'pending'>;
     DesignPreferences: Schema.Attribute.Text;
     Email: Schema.Attribute.String &
       Schema.Attribute.Required &

@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "transactions",
+  "info": {
+    "singularName": "transaction",
+    "pluralName": "transactions",
+    "displayName": "Transaction"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "amount": {
+      "type": "integer"
+    },
+    "currency": {
+      "type": "string",
+      "default": "inr"
+    },
+    "receiptEmail": {
+      "type": "email"
+    },
+    "pay_status": {
+      "type": "string",
+      "default": "pending"
+    },
+    "stripePaymentId": {
+      "type": "uid"
+    },
+    "users_permissions_users": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "transaction"
+    }
+  }
+}

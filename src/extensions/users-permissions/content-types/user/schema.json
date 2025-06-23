@@ -71,6 +71,12 @@
       "relation": "oneToMany",
       "target": "api::demo-schema.demo-schema",
       "mappedBy": "users_permissions_user"
+    },
+    "transaction": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::transaction.transaction",
+      "inversedBy": "users_permissions_users"
     }
   }
 }

@@ -510,6 +510,10 @@ export interface ApiTransactionTransaction extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     currency: Schema.Attribute.String & Schema.Attribute.DefaultTo<'inr'>;
+    demo_schema: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::demo-schema.demo-schema'
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -523,8 +527,8 @@ export interface ApiTransactionTransaction extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    users_permissions_users: Schema.Attribute.Relation<
-      'oneToMany',
+    users_permissions_user: Schema.Attribute.Relation<
+      'manyToOne',
       'plugin::users-permissions.user'
     >;
   };
@@ -1020,8 +1024,8 @@ export interface PluginUsersPermissionsUser
       'manyToOne',
       'plugin::users-permissions.role'
     >;
-    transaction: Schema.Attribute.Relation<
-      'manyToOne',
+    transactions: Schema.Attribute.Relation<
+      'oneToMany',
       'api::transaction.transaction'
     >;
     updatedAt: Schema.Attribute.DateTime;

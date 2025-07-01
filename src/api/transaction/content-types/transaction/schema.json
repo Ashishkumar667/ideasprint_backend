@@ -28,11 +28,16 @@
     "stripePaymentId": {
       "type": "uid"
     },
-    "users_permissions_users": {
+    "demo_schema": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "oneToOne",
+      "target": "api::demo-schema.demo-schema"
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
-      "mappedBy": "transaction"
+      "inversedBy": "transactions"
     }
   }
 }

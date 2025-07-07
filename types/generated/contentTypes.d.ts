@@ -437,6 +437,8 @@ export interface ApiDemoSchemaDemoSchema extends Struct.CollectionTypeSchema {
       'api::demo-schema.demo-schema'
     > &
       Schema.Attribute.Private;
+    Payment_status: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'pending'>;
     Plan: Schema.Attribute.String & Schema.Attribute.Required;
     ProjectName: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;

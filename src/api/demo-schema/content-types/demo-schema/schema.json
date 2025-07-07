@@ -66,6 +66,10 @@
     "files": {
       "type": "string",
       "required": true
+    },
+    "Payment_status": {
+      "type": "string",
+      "default": "pending"
     }
   }
 }

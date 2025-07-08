@@ -63,65 +63,130 @@ export default factories.createCoreController('api::transaction.transaction', ({
     }
   },
 
-  //webhook
-  async stripeWebhook(ctx) {
-    const sig = ctx.request.headers['stripe-signature'];
-    const rawBody = await getRawBody(ctx.req);
+async stripeWebhook(ctx) {
+  const sig = ctx.request.headers['stripe-signature'];
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    } catch (err) {
-      console.error('⚠️ Webhook signature verification failed.', err.message);
-      return ctx.badRequest('Webhook Error');
-    }
+  let event;
+  try {
+    const rawBody = await getRawBody(ctx.req, {
+      length: ctx.request.length,
+      limit: '1mb',
+      encoding: 'utf-8',
+    });
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-      const stripePaymentId = session.id;
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error('⚠️ Webhook signature verification failed.', err.message);
+    return ctx.badRequest(`Webhook Error: ${err.message}`);
+  }
 
-      const [transaction] = await strapi.entityService.findMany('api::transaction.transaction', {
-        filters: { stripePaymentId },
-        populate: ['users_permissions_user', 'demo_schema'],
-      }) as any;
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const stripePaymentId = session.id;
 
-      if (transaction) {
-        await strapi.entityService.update('api::transaction.transaction', transaction.id, {
-          data: { pay_status: 'paid' },
-        });
-        
-          if (transaction.demo_schema?.id) {
-          await strapi.entityService.update('api::demo-schema.demo-schema', transaction.demo_schema.id, {
-            data: {
-              Payment_status: 'paid',
-            },
-          });
-        }
+    const transactions = await strapi.entityService.findMany('api::transaction.transaction', {
+      filters: { stripePaymentId },
+      populate: ['users_permissions_user', 'demo_schema'],
+    }) as any;
 
-        const email = transaction.receiptEmail;
+    if (transactions && transactions.length > 0) {
+      const transaction = transactions[0];
 
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: parseInt(process.env.SMTP_PORT || '587', 10),
-          secure: false,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
+      await strapi.entityService.update('api::transaction.transaction', transaction.id, {
+        data: { pay_status: 'paid' },
+      });
 
-        await transporter.sendMail({
-          from: `"IdeaSprint" <${process.env.SMTP_USER}>`,
-          to: email,
-          subject: '✅ Payment Successful!',
-          html: `<p>Thank you for your payment of <strong>₹${transaction.amount / 100}</strong> for your demo MVP.</p>`,
+      if (transaction.demo_schema?.id) {
+        await strapi.entityService.update('api::demo-schema.demo-schema', transaction.demo_schema.id, {
+          data: { Payment_status: 'paid' },
         });
       }
+
+      const email = transaction.receiptEmail;
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `"IdeaSprint" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: '✅ Payment Successful!',
+        html: `<p>Thank you for your payment of <strong>₹${transaction.amount / 100}</strong> for your demo MVP.</p>`,
+      });
     }
+  }
 
-    ctx.send({ received: true });
-  },
-
+  ctx.send({ received: true });
+}
 }));
-// }));
+ //webhook
+//   async stripeWebhook(ctx) {
+//     const sig = ctx.request.headers['stripe-signature'];
+//     const rawBody = (ctx.req);
 
+//     let event;
+//     try {
+//       event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+//     } catch (err) {
+//       console.error('⚠️ Webhook signature verification failed.', err.message);
+//       return ctx.badRequest('Webhook Error');
+//     }
+
+//     if (event.type === 'checkout.session.completed') {
+//       const session = event.data.object;
+//       const stripePaymentId = session.id;
+
+//       const [transaction] = await strapi.entityService.findMany('api::transaction.transaction', {
+//         filters: { stripePaymentId },
+//         populate: ['users_permissions_user', 'demo_schema'],
+//       }) as any;
+
+//       if (transaction) {
+//         await strapi.entityService.update('api::transaction.transaction', transaction.id, {
+//           data: { pay_status: 'paid' },
+//         });
+        
+//           if (transaction.demo_schema?.id) {
+//           await strapi.entityService.update('api::demo-schema.demo-schema', transaction.demo_schema.id, {
+//             data: {
+//               Payment_status: 'paid',
+//             },
+//           });
+//         }
+
+//         const email = transaction.receiptEmail;
+
+//         const transporter = nodemailer.createTransport({
+//           host: process.env.SMTP_HOST,
+//           port: parseInt(process.env.SMTP_PORT || '587', 10),
+//           secure: false,
+//           auth: {
+//             user: process.env.SMTP_USER,
+//             pass: process.env.SMTP_PASS,
+//           },
+//         });
+
+//         await transporter.sendMail({
+//           from: `"IdeaSprint" <${process.env.SMTP_USER}>`,
+//           to: email,
+//           subject: '✅ Payment Successful!',
+//           html: `<p>Thank you for your payment of <strong>₹${transaction.amount / 100}</strong> for your demo MVP.</p>`,
+//         });
+//       }
+//     }
+
+//     ctx.send({ received: true });
+//   },
+
+// }));
+// }));

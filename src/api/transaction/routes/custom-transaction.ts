@@ -5,9 +5,18 @@
 //       path: '/transactions/checkout',
 //       handler: 'transaction.createCheckoutSession',
 //       config: {
-//          auth: {
-//               scope: ['api::transaction.transaction.create'],
-//           }, 
+//         auth: {
+//           scope: ['api::transaction.transaction.create'],
+//         },
+//         policies: [],
+//       },
+//     },
+//     {
+//       method: 'POST',
+//       path: '/stripe/webhook',
+//       handler: 'transaction.stripeWebhook',
+//       config: {
+//         auth: false,
 //         policies: [],
 //       },
 //     },
@@ -27,10 +36,11 @@ export default {
         policies: [],
       },
     },
+    
     {
-      method: 'POST',
-      path: '/stripe/webhook',
-      handler: 'transaction.stripeWebhook',
+      method: 'GET',
+      path: '/transactions/confirm',
+      handler: 'transaction.getSessionAndSendReceipt',
       config: {
         auth: false,
         policies: [],
@@ -38,3 +48,4 @@ export default {
     },
   ],
 };
+

@@ -37,7 +37,7 @@ export default factories.createCoreController('api::transaction.transaction', ({
             quantity: 1,
           },
         ],
-        success_url: `${process.env.FRONTEND_URL}/success`,
+        success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.FRONTEND_URL}/cancel`,
         customer_email: receiptEmail,
       });
@@ -55,7 +55,10 @@ export default factories.createCoreController('api::transaction.transaction', ({
         },
       });
 
+      
+
       ctx.send({ checkoutUrl: session.url });
+      console.log("checkouturl", session.url)
     } catch (err) {
       console.error(err);
       console.error('🔴 Stripe Error:', err);
@@ -63,130 +66,72 @@ export default factories.createCoreController('api::transaction.transaction', ({
     }
   },
 
-async stripeWebhook(ctx) {
-  const sig = ctx.request.headers['stripe-signature'];
+  //send receipt
+  async getSessionAndSendReceipt(ctx) {
+  const { session_id } = ctx.query;
 
-  let event;
+  if (!session_id) {
+    return ctx.badRequest('Missing session_id');
+  }
+
   try {
-    const rawBody = await getRawBody(ctx.req, {
-      length: ctx.request.length,
-      limit: '1mb',
-      encoding: 'utf-8',
+    const session = await stripe.checkout.sessions.retrieve(session_id as string);
+    console.log("session", session);
+
+    const paymentIntentId = session.payment_intent as string;
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    console.log("payment Intent", paymentIntent);
+
+    
+    const chargeId = paymentIntent.latest_charge;
+    const charge = await stripe.charges.retrieve(chargeId);
+    console.log("charge", charge);
+
+    const receiptUrl = charge?.receipt_url;
+    const email = session.customer_email;
+
+    await strapi.db.query('api::transaction.transaction').updateMany({
+      where: { stripePaymentId: session.id },
+      data: { pay_status: 'paid' },
+    });
+    
+
+     // send email
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
     });
 
-    event = stripe.webhooks.constructEvent(
-      rawBody,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+     const emailHtml = `
+      <div style="font-family: Arial; padding: 20px;">
+        <h2 style="color: #6A1B9A;">✅ Payment Received</h2>
+        <p>Hi ${session.customer_details?.name || 'Customer'},</p>
+        <p>Thank you for your payment of <strong>$${session.amount_total / 100}</strong>.</p>
+        ${receiptUrl ? `<p>📄 <a href="${receiptUrl}" target="_blank">Download Receipt</a></p>` : ''}
+        <br/>
+        <p>— IdeaSprint Team</p>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: `"IdeaSprint" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: '✅ Payment Successful!',
+      html: emailHtml,
+    });
+
+    ctx.send({ success: true, receiptUrl });
+
   } catch (err) {
-    console.error('⚠️ Webhook signature verification failed.', err.message);
-    return ctx.badRequest(`Webhook Error: ${err.message}`);
+    console.error('🔴 Error fetching session:', err);
+    ctx.throw(500, 'Failed to fetch session or send receipt');
   }
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const stripePaymentId = session.id;
-
-    const transactions = await strapi.entityService.findMany('api::transaction.transaction', {
-      filters: { stripePaymentId },
-      populate: ['users_permissions_user', 'demo_schema'],
-    }) as any;
-
-    if (transactions && transactions.length > 0) {
-      const transaction = transactions[0];
-
-      await strapi.entityService.update('api::transaction.transaction', transaction.id, {
-        data: { pay_status: 'paid' },
-      });
-
-      if (transaction.demo_schema?.id) {
-        await strapi.entityService.update('api::demo-schema.demo-schema', transaction.demo_schema.id, {
-          data: { Payment_status: 'paid' },
-        });
-      }
-
-      const email = transaction.receiptEmail;
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587', 10),
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      await transporter.sendMail({
-        from: `"IdeaSprint" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: '✅ Payment Successful!',
-        html: `<p>Thank you for your payment of <strong>₹${transaction.amount / 100}</strong> for your demo MVP.</p>`,
-      });
-    }
-  }
-
-  ctx.send({ received: true });
 }
+
 }));
- //webhook
-//   async stripeWebhook(ctx) {
-//     const sig = ctx.request.headers['stripe-signature'];
-//     const rawBody = (ctx.req);
 
-//     let event;
-//     try {
-//       event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
-//     } catch (err) {
-//       console.error('⚠️ Webhook signature verification failed.', err.message);
-//       return ctx.badRequest('Webhook Error');
-//     }
-
-//     if (event.type === 'checkout.session.completed') {
-//       const session = event.data.object;
-//       const stripePaymentId = session.id;
-
-//       const [transaction] = await strapi.entityService.findMany('api::transaction.transaction', {
-//         filters: { stripePaymentId },
-//         populate: ['users_permissions_user', 'demo_schema'],
-//       }) as any;
-
-//       if (transaction) {
-//         await strapi.entityService.update('api::transaction.transaction', transaction.id, {
-//           data: { pay_status: 'paid' },
-//         });
-        
-//           if (transaction.demo_schema?.id) {
-//           await strapi.entityService.update('api::demo-schema.demo-schema', transaction.demo_schema.id, {
-//             data: {
-//               Payment_status: 'paid',
-//             },
-//           });
-//         }
-
-//         const email = transaction.receiptEmail;
-
-//         const transporter = nodemailer.createTransport({
-//           host: process.env.SMTP_HOST,
-//           port: parseInt(process.env.SMTP_PORT || '587', 10),
-//           secure: false,
-//           auth: {
-//             user: process.env.SMTP_USER,
-//             pass: process.env.SMTP_PASS,
-//           },
-//         });
-
-//         await transporter.sendMail({
-//           from: `"IdeaSprint" <${process.env.SMTP_USER}>`,
-//           to: email,
-//           subject: '✅ Payment Successful!',
-//           html: `<p>Thank you for your payment of <strong>₹${transaction.amount / 100}</strong> for your demo MVP.</p>`,
-//         });
-//       }
-//     }
-
-//     ctx.send({ received: true });
-//   },
-
-// }));
-// }));

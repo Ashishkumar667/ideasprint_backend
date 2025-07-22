@@ -70,6 +70,10 @@
     "Payment_status": {
       "type": "string",
       "default": "pending"
+    },
+    "receipt_url": {
+      "type": "string",
+      "default": "Not available"
     }
   }
 }

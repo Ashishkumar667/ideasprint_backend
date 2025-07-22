@@ -443,6 +443,8 @@ export interface ApiDemoSchemaDemoSchema extends Struct.CollectionTypeSchema {
     ProjectName: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     Purpose: Schema.Attribute.Text;
+    receipt_url: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Not available'>;
     ShortDescription: Schema.Attribute.Text & Schema.Attribute.Required;
     ShortDescriptionOfIdea: Schema.Attribute.Text;
     TargetAudience: Schema.Attribute.String & Schema.Attribute.Required;
@@ -452,6 +454,36 @@ export interface ApiDemoSchemaDemoSchema extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     users_permissions_user: Schema.Attribute.Relation<
       'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiEmailEmail extends Struct.CollectionTypeSchema {
+  collectionName: 'emails';
+  info: {
+    displayName: 'email';
+    pluralName: 'emails';
+    singularName: 'email';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::email.email'> &
+      Schema.Attribute.Private;
+    otp: Schema.Attribute.String & Schema.Attribute.Required;
+    otpExpires: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users_permissions_user: Schema.Attribute.Relation<
+      'oneToOne',
       'plugin::users-permissions.user'
     >;
   };
@@ -1051,6 +1083,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::demo-schema.demo-schema': ApiDemoSchemaDemoSchema;
+      'api::email.email': ApiEmailEmail;
       'api::sign-up.sign-up': ApiSignUpSignUp;
       'api::transaction.transaction': ApiTransactionTransaction;
       'plugin::content-releases.release': PluginContentReleasesRelease;

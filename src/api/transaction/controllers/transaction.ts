@@ -1,10 +1,10 @@
-/**
- * transaction controller
- */
+// /**
+//  * transaction controller
+//  */
 
-// import { factories } from '@strapi/strapi'
+// // import { factories } from '@strapi/strapi'
 
-// export default factories.createCoreController('api::transaction.transaction');
+// // export default factories.createCoreController('api::transaction.transaction');
 
 import { factories } from '@strapi/strapi';
 import getRawBody from 'raw-body';
@@ -56,6 +56,7 @@ export default factories.createCoreController('api::transaction.transaction', ({
       });
 
       
+      console.log("✅ Stripe session.id created:", session.id);
 
       ctx.send({ checkoutUrl: session.url });
       console.log("checkouturl", session.url)
@@ -81,6 +82,7 @@ export default factories.createCoreController('api::transaction.transaction', ({
     const paymentIntentId = session.payment_intent as string;
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     console.log("payment Intent", paymentIntent);
+    console.log("✅ Stripe session.id from frontend query:", session_id);
 
     
     const chargeId = paymentIntent.latest_charge;
@@ -89,11 +91,40 @@ export default factories.createCoreController('api::transaction.transaction', ({
 
     const receiptUrl = charge?.receipt_url;
     const email = session.customer_email;
+    
 
-    await strapi.db.query('api::transaction.transaction').updateMany({
+    const existingTx = await strapi.db.query('api::transaction.transaction').findOne({
       where: { stripePaymentId: session.id },
-      data: { pay_status: 'paid' },
+      populate: {
+              demo_schema: true, 
+       },
     });
+    console.log("🔍 Found DB transaction:", existingTx);
+
+    if (!existingTx) {
+      console.error("❌ No matching transaction found in DB for:", session.id);
+    } else if (existingTx.pay_status !== 'paid') {
+      console.log("✅ Updating DB status → paid");
+
+      await strapi.db.query('api::transaction.transaction').update({
+        where: { id: existingTx.id },
+        data: { pay_status: 'paid' },
+      });
+    }
+    
+     if (existingTx.demo_schema && existingTx.demo_schema.id) {
+        console.log(` Updating demoSchema #${existingTx.demo_schema.id} Payment_status → paid`);
+
+        await strapi.db.query('api::demo-schema.demo-schema').update({
+          where: { id: existingTx.demo_schema.id },
+          data: { Payment_status: 'paid' ,
+                  receipt_url: receiptUrl || 'not available',
+          },
+        });
+      } else {
+        console.log("⚠️ No linked demo_schema found for this transaction");
+      }
+    
     
 
      // send email
@@ -134,4 +165,3 @@ export default factories.createCoreController('api::transaction.transaction', ({
 }
 
 }));
-

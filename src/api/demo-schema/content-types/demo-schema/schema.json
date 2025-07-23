@@ -74,6 +74,10 @@
     "receipt_url": {
       "type": "string",
       "default": "Not available"
+    },
+    "Demo_url": {
+      "type": "string",
+      "unique": false
     }
   }
 }

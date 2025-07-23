@@ -427,6 +427,7 @@ export interface ApiDemoSchemaDemoSchema extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     Demo_status: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'pending'>;
+    Demo_url: Schema.Attribute.String;
     DesignPreferences: Schema.Attribute.Text;
     Email: Schema.Attribute.String & Schema.Attribute.Required;
     files: Schema.Attribute.String & Schema.Attribute.Required;

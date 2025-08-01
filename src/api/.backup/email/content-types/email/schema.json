@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "emails",
+  "info": {
+    "singularName": "email",
+    "pluralName": "emails",
+    "displayName": "Plan"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Basic": {
+      "type": "biginteger",
+      "default": "150"
+    },
+    "Standard": {
+      "type": "biginteger",
+      "default": "300"
+    },
+    "Premium": {
+      "type": "biginteger",
+      "default": "500"
+    },
+    "InvestorPack": {
+      "type": "biginteger",
+      "default": "750"
+    }
+  }
+}

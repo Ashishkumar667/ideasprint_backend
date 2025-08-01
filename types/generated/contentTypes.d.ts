@@ -463,9 +463,38 @@ export interface ApiDemoSchemaDemoSchema extends Struct.CollectionTypeSchema {
 export interface ApiEmailEmail extends Struct.CollectionTypeSchema {
   collectionName: 'emails';
   info: {
-    displayName: 'email';
+    displayName: 'Plan';
     pluralName: 'emails';
     singularName: 'email';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    Basic: Schema.Attribute.BigInteger & Schema.Attribute.DefaultTo<'150'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    InvestorPack: Schema.Attribute.BigInteger &
+      Schema.Attribute.DefaultTo<'750'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::email.email'> &
+      Schema.Attribute.Private;
+    Premium: Schema.Attribute.BigInteger & Schema.Attribute.DefaultTo<'500'>;
+    publishedAt: Schema.Attribute.DateTime;
+    Standard: Schema.Attribute.BigInteger & Schema.Attribute.DefaultTo<'300'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiPlanPlan extends Struct.CollectionTypeSchema {
+  collectionName: 'plans';
+  info: {
+    displayName: 'plan';
+    pluralName: 'plans';
+    singularName: 'plan';
   };
   options: {
     draftAndPublish: true;
@@ -474,19 +503,18 @@ export interface ApiEmailEmail extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    currency: Schema.Attribute.String & Schema.Attribute.DefaultTo<'USD'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::email.email'> &
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::plan.plan'> &
       Schema.Attribute.Private;
-    otp: Schema.Attribute.String & Schema.Attribute.Required;
-    otpExpires: Schema.Attribute.String;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    price: Schema.Attribute.BigInteger & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    users_permissions_user: Schema.Attribute.Relation<
-      'oneToOne',
-      'plugin::users-permissions.user'
-    >;
   };
 }
 
@@ -1085,6 +1113,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::demo-schema.demo-schema': ApiDemoSchemaDemoSchema;
       'api::email.email': ApiEmailEmail;
+      'api::plan.plan': ApiPlanPlan;
       'api::sign-up.sign-up': ApiSignUpSignUp;
       'api::transaction.transaction': ApiTransactionTransaction;
       'plugin::content-releases.release': PluginContentReleasesRelease;

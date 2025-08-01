@@ -14,13 +14,20 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 export default factories.createCoreController('api::transaction.transaction', ({ strapi }) => ({
   async createCheckoutSession(ctx) {
     try {
-      const { amount, currency, receiptEmail, demoSchemaId } = ctx.request.body;
+      const { planId, receiptEmail, demoSchemaId } = ctx.request.body;
 
       const user = ctx.state.user;
       if (!user || !user.id) {
         return ctx.unauthorized('You must be logged in to create a payment.');
       }
+     
+          const plan = await strapi.entityService.findOne('api::plan.plan', planId);
 
+    if (!plan) {
+      return ctx.badRequest('Invalid plan selected.');
+    }
+
+    const { price, currency, name } = plan;
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -30,9 +37,9 @@ export default factories.createCoreController('api::transaction.transaction', ({
             price_data: {
               currency: currency || 'inr',
               product_data: {
-                name: 'Payment to IdeaSprint for demo',
+                name: `Payment to IdeaSprint for demo ${name} Plan`,
               },
-              unit_amount: amount * 100, // in paisa or cents
+              unit_amount:  Number(plan.price) * 100, // in paisa or cents
             },
             quantity: 1,
           },
@@ -45,7 +52,7 @@ export default factories.createCoreController('api::transaction.transaction', ({
       
       const newTransaction = await strapi.entityService.create('api::transaction.transaction', {
         data: {
-          amount,
+          price,
           currency: currency || 'inr',
           receiptEmail,
           pay_status: 'pending',

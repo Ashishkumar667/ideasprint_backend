@@ -9,6 +9,7 @@
 import { factories } from '@strapi/strapi';
 import getRawBody from 'raw-body';
 import nodemailer from 'nodemailer';
+import { google } from 'googleapis';
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export default factories.createCoreController('api::transaction.transaction', ({ strapi }) => ({
@@ -132,18 +133,30 @@ export default factories.createCoreController('api::transaction.transaction', ({
         console.log("⚠️ No linked demo_schema found for this transaction");
       }
     
-    
+          const oAuth2Client = new google.auth.OAuth2(
+        process.env.GMAIL_CLIENT_ID,
+        process.env.GMAIL_CLIENT_SECRET,
+        process.env.GMAIL_REDIRECT_URI
+      );
+
+      oAuth2Client.setCredentials({
+        refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+      });
+
+      const accessToken = await oAuth2Client.getAccessToken();
 
      // send email
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+     const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          type: 'OAuth2',
+          user: process.env.SMTP_USER,
+          clientId: process.env.GMAIL_CLIENT_ID,
+          clientSecret: process.env.GMAIL_CLIENT_SECRET,
+          refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+          accessToken: accessToken.token,
+        },
+      });
 
      const emailHtml = `
       <div style="font-family: Arial; padding: 20px;">

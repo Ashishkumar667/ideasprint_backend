@@ -19,6 +19,7 @@
     "@strapi/plugin-users-permissions": "5.15.1",
     "@strapi/strapi": "5.15.1",
     "better-sqlite3": "11.3.0",
+    "googleapis": "^154.1.0",
     "mysql2": "^3.14.1",
     "nodemailer": "^7.0.4",
     "raw-body": "^3.0.0",

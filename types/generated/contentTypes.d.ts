@@ -418,7 +418,7 @@ export interface ApiDemoSchemaDemoSchema extends Struct.CollectionTypeSchema {
     singularName: 'demo-schema';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     coreFeatures: Schema.Attribute.JSON & Schema.Attribute.Required;
